@@ -39,15 +39,14 @@ function touchCommit($commit)
         echo 'Skipping pause...' . PHP_EOL;
     }
     $output = null;
-    file_put_contents($commitTemplatePath, 'fixup! ' . $shortCommitMessage);
-    cmd($commitCommand, $output); //commit cherrypick
+    cmd($commitCommand . ' --amend', $output); //commit cherrypick
 
     $phpFiles = getChangedPhpFiles($commit, 'ACMR');
     foreach ($phpFiles as $phpFile) {
         revertFile(getcwd() . '/' . $phpFile);
     }
     $output = null;
-    cmd($commitCommand, $output); // commit revert
+    cmd($commitCommand . ' --amend', $output); // commit revert
 }
 
 function getChangedPhpFiles($commit, $mode = 'ACMR')
