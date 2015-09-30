@@ -1,10 +1,8 @@
 <?php
 
-require_once "convert.functions.php";
+require_once 'convert.functions.php';
 
 $commit = $argv[1];
-
-$commit = "e758f6395c16b558a0b2927d21095b6823b5e518";
 
 $commandMessage = sprintf('git log --format=%%B -n 1 %s', $commit);
 exec($commandMessage, $output);
@@ -24,15 +22,17 @@ $phpFiles = array_filter($output, function ($file) {
 
 foreach ($phpFiles as $phpFile) {
     convertFile($phpFile);
+    // exec $phpFile - revert short diffs
 }
 
 $commandCherryPick = sprintf('git cherry-pick %s', $commit);
 exec($commandCherryPick, $output);
-print_r($output);
+//print_r($output);
 
 echo "Pausing command..." . PHP_EOL;
 fgetc(STDIN);
 
 foreach ($phpFiles as $phpFile) {
+    revertFile($phpFile);
     // exec $phpFile - revert short diffs
 }
