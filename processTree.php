@@ -4,6 +4,7 @@ require_once 'touch-commit.php';
 $path = getcwd();
 $from = $argv[1];
 $to = $argv[2];
+$skipCommit = isset($argv[3]) ? $argv[3] : null;
 $scriptPath = dirname($argv[0]);
 define('SCRIPT_ROOT', $scriptPath);
 
@@ -18,6 +19,9 @@ $revisions = array_map(function ($item) {
 $revisions = array_reverse($revisions);
 
 foreach ($revisions as $revision) {
+    if ($skipCommit && ($revision !== $skipCommit)) {
+        continue;
+    }
     echo 'processing revision ' . $revision . PHP_EOL;
     touchCommit($revision);
 }
