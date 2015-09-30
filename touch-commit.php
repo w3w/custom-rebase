@@ -1,5 +1,7 @@
 <?php
 
+require_once "convert.functions.php";
+
 $commit = $argv[1];
 
 $commit = "e758f6395c16b558a0b2927d21095b6823b5e518";
@@ -15,7 +17,7 @@ $phpFiles = array_filter($output, function ($file) {
 });
 
 foreach ($phpFiles as $phpFile) {
-    // exec $phpFile - revert short diffs
+    convertFile($phpFile);
 }
 
 //$commandCherryPick = sprintf('git cherry-pick ')
