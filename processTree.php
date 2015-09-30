@@ -5,6 +5,7 @@ $path = getcwd();
 $from = $argv[1];
 $to = $argv[2];
 $scriptPath = dirname($argv[0]);
+define('SCRIPT_ROOT', $scriptPath);
 
 $commandShowTree = sprintf('git log --oneline %s..%s', $from, $to);
 
