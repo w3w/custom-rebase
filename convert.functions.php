@@ -8,7 +8,13 @@ function convertFiles($files) {
 
 function convertFile($file) {
 	$fileContents = file_get_contents($file);
-	file_put_contents($file, $fileContents);
+	file_put_contents($file, convertSquareBracketsToArrays($fileContents));
+}
+
+
+function revertFile($file) {
+	$fileContents = file_get_contents($file);
+	file_put_contents($file, convertArraysToSquareBrackets($fileContents));
 }
 
 function convertSquareBracketsToArrays($code)
@@ -29,3 +35,28 @@ function convertSquareBracketsToArrays($code)
 		return is_array($token) ? $token[1] : $token;
 	}
 }
+
+function convertArraysToSquareBrackets($code)
+{
+	$out = '';
+	$brackets = [];
+	$tokens = token_get_all($code);
+	for ($i = 0; $i < count($tokens); $i++) {
+		$token = $tokens[$i];
+		if ($token === '(') {
+			$brackets[] = FALSE;
+		} elseif ($token === ')') {
+			$token = array_pop($brackets) ? ']' : ')';
+		} elseif (is_array($token) && $token[0] === T_ARRAY) {
+			$a = $i + 1;
+			if (isset($tokens[$a]) && $tokens[$a][0] === T_WHITESPACE) {
+				$a++;
+			}
+			if (isset($tokens[$a]) && $tokens[$a] === '(') {
+				$i = $a;
+				$brackets[] = TRUE;
+				$token = '[';
+			}
+		}
+		$out .= is_array($token) ? $token[1] : $token;
+	}
