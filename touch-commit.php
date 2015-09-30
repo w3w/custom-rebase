@@ -1,38 +1,54 @@
 <?php
 
 require_once 'convert.functions.php';
+function touchCommit($commit)
+{
+    $commandMessage = sprintf('git log --format=%%B -n 1 %s', $commit);
+    cmd($commandMessage, $output);
+    $commitMessage = $output[0];
 
-$commit = $argv[1];
+    echo $commitMessage . PHP_EOL;
 
-$commandMessage = sprintf('git log --format=%%B -n 1 %s', $commit);
-exec($commandMessage, $output);
-$commandMessage = $output[0];
+    $phpFiles = getChangedPhpFiles($commit, 'M');
+    foreach ($phpFiles as $phpFile) {
+        convertFile(getcwd() . '/' . $phpFile);
+    }
+    $gitCommitCmd = 'git commit -aqm "%s"';
+    $commitCommand = sprintf($gitCommitCmd, $commitMessage);
+    $output = null;
+    cmd($commitCommand, $output);
 
-echo $commandMessage . PHP_EOL;
+    $commandCherryPick = sprintf('git cherry-pick -n %s', $commit);
+    cmd($commandCherryPick, $output);
 
-$commandDiff = sprintf('git diff --name-only %s', $commit);
+    echo "Pausing command..." . PHP_EOL;
+    $handle = fopen("php://stdin", "r");
+    $line = fgets($handle);
+    fclose($handle);
+    $commitCommand = sprintf($gitCommitCmd, 'fixup! ' . $commitMessage);
+    $output = null;
+    cmd($commitCommand, $output);
 
-$output = array();
-exec($commandDiff, $output);
-
-$phpFiles = array_filter($output, function ($file) {
-    $info = new SplFileInfo($file);
-    return $info->getExtension() == 'php';
-});
-
-foreach ($phpFiles as $phpFile) {
-    convertFile($phpFile);
-    // exec $phpFile - revert short diffs
+    $phpFiles = getChangedPhpFiles($commit, 'ACMR');
+    foreach ($phpFiles as $phpFile) {
+        revertFile(getcwd() . '/' . $phpFile);
+    }
+    $commitCommand = sprintf($gitCommitCmd, 'fixup! ' . $commitMessage);
+    $output = null;
+    cmd($commitCommand, $output);
 }
 
-$commandCherryPick = sprintf('git cherry-pick %s', $commit);
-exec($commandCherryPick, $output);
-//print_r($output);
+function getChangedPhpFiles($commit, $mode = 'ACMR')
+{
+    $commandDiff = sprintf('git show --name-only %s --diff-filter %s', $commit, $mode);
 
-echo "Pausing command..." . PHP_EOL;
-fgetc(STDIN);
+    $output = [];
+    cmd($commandDiff, $output);
 
-foreach ($phpFiles as $phpFile) {
-    revertFile($phpFile);
-    // exec $phpFile - revert short diffs
+    $phpFiles = array_filter($output, function ($file) {
+        $info = new SplFileInfo($file);
+        return $info->getExtension() == 'php';
+    });
+
+    return $phpFiles;
 }
